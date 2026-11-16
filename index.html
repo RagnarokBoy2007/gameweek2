@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SI Unit Courier: ภารกิจจัดส่งพัสดุมิติพิศวง</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Prompt & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Prompt', 'Inter', sans-serif;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes floatUpFade {
+            0% { transform: translateY(0) scale(0.8); opacity: 0; }
+            20% { transform: translateY(-10px) scale(1.1); opacity: 1; }
+            100% { transform: translateY(-45px) scale(1); opacity: 0; }
+        }
+        .score-popup {
+            animation: floatUpFade 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-slate-900 relative overflow-x-hidden">
+
+    <!-- Floating Score Container -->
+    <div id="floating-score-layer" class="fixed inset-0 pointer-events-none z-50 flex items-center justify-center"></div>
+
+    <!-- Header / Navbar -->
+    <header class="w-full bg-slate-900/80 backdrop-blur-md border-b border-indigo-500/20 px-4 py-3 sticky top-0 z-40 shadow-lg">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="returnToMenu()">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-emerald-400 flex items-center justify-center text-slate-900 font-bold text-xl shadow-md shadow-amber-500/20">
+                    📦
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg bg-gradient-to-r from-amber-300 via-emerald-300 to-cyan-300 bg-clip-text text-transparent">SI Unit Courier</h1>
+                    <p class="text-xs text-slate-400">มิติพิศวงบัญญัติไตรยางศ์</p>
+                </div>
+            </div>
+            
+            <div id="stats-header" class="hidden flex items-center space-x-3 sm:space-x-4 text-sm font-medium">
+                <div id="score-badge" class="bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 flex items-center space-x-1 transition-transform">
+                    <span>⭐</span>
+                    <span id="stat-score" class="text-amber-400 font-bold">0</span>
+                </div>
+                <div class="bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 flex items-center space-x-1">
+                    <span>🔥</span>
+                    <span id="stat-streak" class="text-emerald-400 font-bold">0</span>
+                </div>
+                <div id="timer-box" class="hidden bg-rose-950/80 px-3 py-1.5 rounded-full border border-rose-700/50 flex items-center space-x-1 text-rose-300">
+                    <span>⏳</span>
+                    <span id="stat-timer" class="font-bold">60</span>s
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 flex items-center justify-center p-4 max-w-2xl mx-auto w-full">
+
+        <!-- 1. Menu Screen -->
+        <div id="screen-menu" class="w-full bg-slate-800/60 backdrop-blur-xl border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-6 animate-pop">
+            <div class="relative inline-block">
+                <div class="text-6xl sm:text-7xl animate-float">🛸📦</div>
+                <div class="absolute -bottom-2 -right-2 bg-emerald-500 text-slate-950 text-xs font-bold px-2 py-0.5 rounded-full shadow">Random Deck</div>
+            </div>
+            
+            <div class="space-y-2">
+                <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">ภารกิจจัดส่งพัสดุมิติพิศวง</h2>
+                <p class="text-slate-300 text-sm sm:text-base max-w-md mx-auto">
+                    สุ่มโจทย์จัดส่งพัสดุสุดท้าทาย! เทียบสัดส่วน <span class="text-amber-400 font-semibold">"บัญญัติไตรยางศ์ 3 บรรทัด"</span> เก็บคะแนนสะสมและไต่อันดับสู่ Hall of Fame
+                </p>
+            </div>
+
+            <!-- Vehicle & Hall of Fame Quick Bar -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="bg-slate-900/60 border border-slate-700/60 rounded-2xl p-3 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5 text-left">
+                        <span id="menu-vehicle-icon" class="text-2xl">🛵</span>
+                        <div>
+                            <div class="text-[11px] text-slate-400">ยานพาหนะ</div>
+                            <div id="menu-vehicle-name" class="font-bold text-xs text-emerald-400">สกู๊ตเตอร์กู้ภัย</div>
+                        </div>
+                    </div>
+                    <button onclick="openGarage()" class="px-2.5 py-1.5 bg-indigo-600/40 hover:bg-indigo-600/60 border border-indigo-400/40 text-indigo-200 text-xs font-semibold rounded-xl transition">
+                        โรงรถ 🚗
+                    </button>
+                </div>
+
+                <div class="bg-slate-900/60 border border-amber-500/30 rounded-2xl p-3 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5 text-left">
+                        <span class="text-2xl">🏆</span>
+                        <div>
+                            <div class="text-[11px] text-slate-400">ทำเนียบผู้พิชิต</div>
+                            <div class="font-bold text-xs text-amber-400">Hall of Fame</div>
+                        </div>
+                    </div>
+                    <button onclick="openLeaderboard()" class="px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 text-xs font-semibold rounded-xl transition">
+                        ดูอันดับ 📊
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mode Selection Buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <button onclick="startGame('practice')" class="group relative overflow-hidden bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-emerald-600/30 transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-3">
+                    <span class="text-xl">🎯</span>
+                    <div class="text-left">
+                        <div class="text-base">โหมดภารกิจ 5 ด่าน</div>
+                        <div class="text-xs text-emerald-100 font-normal">สุ่ม 5 ข้อ เก็บดาวให้ผ่านเกณฑ์</div>
+                    </div>
+                </button>
+
+                <button onclick="startGame('timeAttack')" class="group relative overflow-hidden bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-amber-600/30 transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-3">
+                    <span class="text-xl">⚡</span>
+                    <div class="text-left">
+                        <div class="text-base">โหมดท้าทาย 60 วิ</div>
+                        <div class="text-xs text-amber-100 font-normal">ทำแต้มสูงสุดแข่งกับเวลา</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. Game Screen (3-Step Rule of Three) -->
+        <div id="screen-game" class="w-full hidden space-y-4 animate-pop">
+            
+            <!-- Mission Dispatch Card -->
+            <div class="bg-slate-800/90 border border-indigo-500/30 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-indigo-600/40 text-indigo-200 text-xs px-3 py-1 rounded-bl-xl font-medium border-l border-b border-indigo-500/30">
+                    ภารกิจที่ <span id="current-mission-num">1</span><span id="total-mission-label">/5</span>
+                </div>
+                
+                <div class="flex items-start space-x-3">
+                    <div id="mission-icon" class="text-4xl bg-slate-900/60 p-3 rounded-2xl border border-slate-700/60">💊</div>
+                    <div class="flex-1 pr-12">
+                        <span id="mission-recipient" class="text-xs uppercase tracking-wider font-semibold text-amber-400">สถานีอวกาศดานา</span>
+                        <h3 id="mission-title" class="text-base sm:text-lg font-bold text-white mt-0.5">จัดส่งยาสูตรลับ...</h3>
+                        <p id="mission-desc" class="text-xs text-slate-300 mt-1">ช่วยแปลงหน่วยให้ตรงเป๊ะ เพื่อไม่ให้ระบบจ่ายยาพังเสียหาย!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- The 3-Step บัญญัติไตรยางศ์ Container -->
+            <div class="space-y-3">
+                
+                <!-- Step 1: Base Relationship (Line 1) -->
+                <div id="box-step1" class="bg-slate-800/70 border border-indigo-500/20 rounded-2xl p-4 transition duration-300">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-indigo-400 bg-indigo-950/60 px-2.5 py-1 rounded-lg border border-indigo-800/40">บรรทัดที่ 1: ตั้งต้นความสัมพันธ์</span>
+                        <span id="badge-step1" class="text-xs text-slate-400">รอยืนยัน</span>
+                    </div>
+                    <div id="content-step1" class="text-sm font-medium text-slate-200"></div>
+                </div>
+
+                <!-- Step 2: Unit Value (Line 2) -->
+                <div id="box-step2" class="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-4 opacity-60 pointer-events-none transition duration-300 relative">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-800/40">บรรทัดที่ 2: เทียบหาค่า "1 หน่วย" (+50 แต้ม)</span>
+                        <span id="badge-step2" class="text-xs text-slate-400">ล็อกอยู่</span>
+                    </div>
+                    <div class="text-sm text-slate-300 mb-3" id="prompt-step2"></div>
+                    <div id="options-step2" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+                </div>
+
+                <!-- Step 3: Final Answer (Line 3) -->
+                <div id="box-step3" class="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-4 opacity-60 pointer-events-none transition duration-300 relative">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-amber-400 bg-amber-950/60 px-2.5 py-1 rounded-lg border border-amber-800/40">บรรทัดที่ 3: คูณหาคำตอบสุดท้าย (+100 แต้ม)</span>
+                        <span id="badge-step3" class="text-xs text-slate-400">ล็อกอยู่</span>
+                    </div>
+                    <div class="text-sm text-slate-300 mb-3" id="prompt-step3"></div>
+                    <div id="options-step3" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+                </div>
+
+            </div>
+
+            <!-- Feedback Toast / Action Area -->
+            <div id="feedback-box" class="hidden rounded-2xl p-3.5 text-center font-medium text-sm animate-pop"></div>
+
+        </div>
+
+        <!-- 3. Result / Scorecard Screen -->
+        <div id="screen-result" class="w-full hidden bg-slate-800/80 backdrop-blur-xl border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-pop">
+            
+            <!-- Star Rating Display -->
+            <div class="space-y-1">
+                <div id="result-stars" class="text-4xl sm:text-5xl tracking-widest drop-shadow-md">⭐⭐⭐</div>
+                <div id="result-pass-badge" class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    ผ่านเกณฑ์มาตรฐาน (ต้องได้ 2 ดาวขึ้นไป / 450+ คะแนน)
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <h2 id="result-heading" class="text-2xl font-bold text-white">สรุปผลการปฏิบัติภารกิจ</h2>
+                <p id="result-subtext" class="text-slate-300 text-xs sm:text-sm">ยอดเยี่ยมมาก! คุณบันทึกข้อมูลการจัดส่งสำเร็จ</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 max-w-xs mx-auto">
+                <div class="bg-slate-900/80 border border-slate-700 p-3.5 rounded-2xl">
+                    <div class="text-xs text-slate-400">คะแนนสะสมสุทธิ</div>
+                    <div id="final-score" class="text-2xl font-bold text-amber-400 mt-0.5">0</div>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-700 p-3.5 rounded-2xl">
+                    <div class="text-xs text-slate-400">คอมโบสูงสุด</div>
+                    <div id="final-streak" class="text-2xl font-bold text-emerald-400 mt-0.5">0x</div>
+                </div>
+            </div>
+
+            <!-- Hall of Fame Submission Form (Only shown if passed >= 2 stars) -->
+            <div id="hof-submit-section" class="bg-slate-900/70 border border-amber-500/30 rounded-2xl p-4 space-y-3 text-left max-w-md mx-auto">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">🏆 บันทึกชื่อเข้าสู่ Hall of Fame</span>
+                    <span class="text-[11px] text-slate-400">ผ่านเกณฑ์ 2 ดาวขึ้นไป!</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input type="text" id="player-name" placeholder="ชื่อ-นามสกุล / ชื่อเล่น" class="sm:col-span-2 bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-amber-400">
+                    <input type="text" id="player-class" placeholder="ห้อง (เช่น 4/5)" class="bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-amber-400">
+                </div>
+                <button id="btn-submit-hof" onclick="submitToHallOfFame()" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-sm rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                    <span>ส่งรายชื่อขึ้นทำเนียบ Hall of Fame</span>
+                </button>
+                <div id="hof-submit-status" class="hidden text-xs text-center font-medium"></div>
+            </div>
+
+            <div class="pt-2 flex flex-col sm:flex-row justify-center gap-3">
+                <button onclick="returnToMenu()" class="w-full sm:w-auto px-5 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm rounded-2xl transition">
+                    เมนูหลัก
+                </button>
+                <button onclick="openLeaderboard()" class="w-full sm:w-auto px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-2xl shadow-lg transition">
+                    ดูอันดับ Hall of Fame 🏆
+                </button>
+                <button onclick="startGame(currentGameMode)" class="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm rounded-2xl shadow-lg transition">
+                    เล่นอีกครั้ง 🔄
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. Hall of Fame Leaderboard Screen -->
+        <div id="screen-leaderboard" class="w-full hidden bg-slate-800/90 backdrop-blur-xl border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 animate-pop">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-amber-400 flex items-center gap-2">
+                        <span>🏆</span>
+                        <span>Hall of Fame ทำเนียบสุดยอดนักส่งพัสดุ</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">จัดอันดับคะแนนสูงสุดแบบเรียลไทม์</p>
+                </div>
+                <button onclick="returnToMenu()" class="text-slate-300 hover:text-white text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-xl transition">กลับเมนู</button>
+            </div>
+
+            <div id="leaderboard-loading" class="py-10 text-center space-y-3">
+                <div class="inline-block w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-xs text-slate-300">กำลังดึงข้อมูลอันดับจากฐานข้อมูลมิติพิศวง...</p>
+            </div>
+
+            <div id="leaderboard-list" class="hidden space-y-2 max-h-80 overflow-y-auto pr-1">
+                <!-- Leaderboard rows injected dynamically -->
+            </div>
+
+            <div class="pt-2 text-center">
+                <button onclick="fetchLeaderboard()" class="text-xs text-indigo-300 hover:text-indigo-200 underline">รีเฟรชข้อมูลอันดับ 🔄</button>
+            </div>
+        </div>
+
+        <!-- 5. Garage Modal -->
+        <div id="screen-garage" class="w-full hidden bg-slate-800/90 backdrop-blur-xl border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-pop">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+                <h3 class="text-xl font-bold text-white flex items-center space-x-2">
+                    <span>🚗</span>
+                    <span>โรงรถยานพาหนะข้ามมิติ</span>
+                </h3>
+                <button onclick="closeGarage()" class="text-slate-400 hover:text-white text-sm bg-slate-700/50 px-3 py-1 rounded-xl">ปิด</button>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3">
+                <div onclick="selectVehicle('scooter', 'สกู๊ตเตอร์กู้ภัยเวกเตอร์', '🛵')" id="garage-item-scooter" class="cursor-pointer bg-slate-900/80 border-2 border-emerald-500 rounded-2xl p-4 flex items-center justify-between transition">
+                    <div class="flex items-center space-x-4">
+                        <span class="text-3xl">🛵</span>
+                        <div>
+                            <div class="font-bold text-white">สกู๊ตเตอร์กู้ภัยเวกเตอร์</div>
+                            <div class="text-xs text-slate-400">ยานพาหนะเริ่มต้น คล่องตัวสูง</div>
+                        </div>
+                    </div>
+                    <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-3 py-1 rounded-full font-bold">ใช้งานอยู่</span>
+                </div>
+
+                <div onclick="selectVehicle('ufo', 'ยูเอฟโอควอนตัมพลังแสง', '🛸')" id="garage-item-ufo" class="cursor-pointer bg-slate-900/60 border-2 border-slate-700/60 hover:border-slate-500 rounded-2xl p-4 flex items-center justify-between transition">
+                    <div class="flex items-center space-x-4">
+                        <span class="text-3xl">🛸</span>
+                        <div>
+                            <div class="font-bold text-white">ยูเอฟโอควอนตัมพลังแสง</div>
+                            <div class="text-xs text-slate-400">ปลดล็อกเมื่อทำคะแนนรวมถึง 450 คะแนน</div>
+                        </div>
+                    </div>
+                    <span id="ufo-status" class="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full font-bold">ล็อกอยู่ 🔒</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-4 text-xs text-slate-500 border-t border-slate-800/80">
+        SI Unit Courier • เกมการศึกษาฟิสิกส์เชิงสัดส่วน บัญญัติไตรยางศ์ สำหรับนักเรียน ม.4
+    </footer>
+
+    <!-- JavaScript Game Engine, Random Generator & Hall of Fame API -->
+    <script>
+        // Google Apps Script Web App Endpoint สำหรับ Hall of Fame
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby_JabrxkdIfil15ZB6Yd9xL26A3APa53THexKq-rIWGsct_uIN6tyyhYcK9ZhzqmrFiw/exec";
+
+        // --- Web Audio Synthesizer for Sound Effects ---
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(420, now);
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'ding') {
+                    // เสียง "ติ้ง!" สดใสเมื่อได้คะแนนแต่ละบรรทัด
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, now); // A5
+                    osc.frequency.exponentialRampToValueAtTime(1318.51, now + 0.12); // E6
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.setValueAtTime(120, now + 0.1);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                    osc.start(now);
+                    osc.stop(now + 0.22);
+                } else if (type === 'win') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+                    osc.start(now);
+                    osc.stop(now + 0.55);
+                }
+            } catch (e) {
+                console.log("Audio waiting for interaction");
+            }
+        }
+
+        // --- Floating Score Popup ("ติ้ง! +คะแนน") ---
+        function triggerScorePopup(points, bonusText = "") {
+            playSound('ding');
+            score += points;
+            document.getElementById('stat-score').textContent = score;
+
+            // กระตุกป้ายคะแนนด้านบนเบาๆ
+            const badge = document.getElementById('score-badge');
+            badge.classList.add('scale-125', 'border-amber-400');
+            setTimeout(() => badge.classList.remove('scale-125', 'border-amber-400'), 250);
+
+            // สร้างตัวเลขลอยขึ้นกลางจอ
+            const layer = document.getElementById('floating-score-layer');
+            const popup = document.createElement('div');
+            popup.className = "score-popup bg-slate-900/90 border-2 border-amber-400 text-amber-300 font-extrabold text-xl sm:text-2xl px-5 py-2.5 rounded-2xl shadow-2xl shadow-amber-500/30 flex items-center gap-2";
+            popup.innerHTML = `<span>✨ ติ้ง! +${points}</span> ${bonusText ? `<span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">${bonusText}</span>` : ''}`;
+            layer.appendChild(popup);
+
+            setTimeout(() => {
+                popup.remove();
+            }, 1050);
+        }
+
+        // --- คลังโจทย์หลากหลายรูปแบบ (15+ โจทย์ครอบคลุมทั้งหน่วยเล็ก->ใหญ่ และ ใหญ่->เล็ก) ---
+        const missionDatabase = [
+            {
+                recipient: "สถานีวิจัยชีวะมิติ X-1",
+                icon: "💊",
+                title: "จัดส่งยาสูตรลับ 2,500 มิลลิกรัม (mg) เป็น กรัม (g)",
+                desc: "แปลงหน่วยมวลจากมิลลิกรัมเป็นกรัม เพื่อให้ห้องทดลองผสมยาได้แม่นยำ",
+                step1Text: "1,000 มิลลิกรัม (mg) = 1 กรัม (g)",
+                step2Prompt: "ถ้า 1,000 mg = 1 g แล้ว 1 mg จะเท่ากับเท่าไหร่?",
+                step2Options: [
+                    { text: "1 / 1,000 g", correct: true },
+                    { text: "1 × 1,000 g", correct: false },
+                    { text: "1,000 g", correct: false },
+                    { text: "1 / 100 g", correct: false }
+                ],
+                step3Prompt: "ดังนั้น พัสดุ 2,500 mg จะเท่ากับกี่กรัม?",
+                step3Options: [
+                    { text: "2.5 g", correct: true },
+                    { text: "25 g", correct: false },
+                    { text: "250 g", correct: false },
+                    { text: "0.25 g", correct: false }
+                ]
+            },
+            {
+                recipient: "หอสังเกตการณ์ดาวหาง",
+                icon: "🔭",
+                title: "ส่งมอบเลนส์กล้อง 3,500 มิลลิเมตร (mm) เป็น เมตร (m)",
+                desc: "คำนวณความยาวเลนส์ให้ตรงกับแท่นประกอบในยานอวกาศ",
+                step1Text: "1,000 มิลลิเมตร (mm) = 1 เมตร (m)",
+                step2Prompt: "ถ้า 1,000 mm = 1 m แล้ว 1 mm จะเท่ากับเท่าไหร่?",
+                step2Options: [
+                    { text: "1 / 1,000 m", correct: true },
+                    { text: "100 m", correct: false },
+                    { text: "1 × 1,000 m", correct: false },
+                    { text: "1 / 100 m", correct: false }
+                ],
+                step3Prompt: "ดังนั้น เลนส์ 3,500 mm จะเท่ากับกี่เมตร?",
+                step3Options: [
+                    { text: "3.5 m", correct: true },
+                    { text: "35 m", correct: false },
+                    { text: "0.35 m", correct: false },
+                    { text: "350 m", correct: false }
+                ]
+            },
+            {
+                recipient: "สถานีสื่อสารข้ามมิติ C-137",
+                icon: "📡",
+                title: "ปรับความถี่คลื่นวิทยุ 4.5 กิโลเฮิรตซ์ (kHz) เป็น เฮิรตซ์ (Hz)",
+                desc: "แปลงหน่วยจากหน่วยใหญ่ (กิโล) เป็นหน่วยฐาน (เฮิรตซ์)",
+                step1Text: "1 กิโลเฮิรตซ์ (kHz) = 1,000 เฮิรตซ์ (Hz)",
+                step2Prompt: "ถ้า 1 kHz = 1,000 Hz แล้วต้องการหา 4.5 kHz ต้องทำอย่างไร?",
+                step2Options: [
+                    { text: "นำ 4.5 × 1,000 Hz", correct: true },
+                    { text: "นำ 4.5 ÷ 1,000 Hz", correct: false },
+                    { text: "นำ 1,000 ÷ 4.5 Hz", correct: false },
+                    { text: "นำ 4.5 + 1,000 Hz", correct: false }
+                ],
+                step3Prompt: "ดังนั้น 4.5 kHz จะเท่ากับกี่เฮิรตซ์ (Hz)?",
+                step3Options: [
+                    { text: "4,500 Hz", correct: true },
+                    { text: "450 Hz", correct: false },
+                    { text: "45,000 Hz", correct: false },
+                    { text: "0.0045 Hz", correct: false }
+                ]
+            },
+            {
+                recipient: "โรงงานเชื้อเพลิงไอออน",
+                icon: "⚡",
+                title: "แปลงน้ำหนักถังเชื้อเพลิง 4,800 กรัม (g) เป็น กิโลกรัม (kg)",
+                desc: "ตรวจสอบน้ำหนักก่อนโหลดขึ้นยานแม่ข้ามจักรวาล",
+                step1Text: "1,000 กรัม (g) = 1 กิโลกรัม (kg)",
+                step2Prompt: "ถ้า 1,000 g = 1 kg แล้ว 1 g จะเท่ากับเท่าไหร่?",
+                step2Options: [
+                    { text: "1 / 1,000 kg", correct: true },
+                    { text: "1,000 kg", correct: false },
+                    { text: "100 kg", correct: false },
+                    { text: "1 / 100 kg", correct: false }
+                ],
+                step3Prompt: "ดังนั้น เชื้อเพลิง 4,800 g จะเท่ากับกี่กิโลกรัม?",
+                step3Options: [
+                    { text: "4.8 kg", correct: true },
+                    { text: "48 kg", correct: false },
+                    { text: "0.48 kg", correct: false },
+                    { text: "480 kg", correct: false }
+                ]
+            },
+            {
+                recipient: "ศูนย์วิศวกรรมสะพานข้ามมิติ",
+                icon: "🌉",
+                title: "ส่งสายเคเบิลไทเทเนียมยาว 2.4 กิโลเมตร (km) เป็น เมตร (m)",
+                desc: "คำนวณความยาวสายเคเบิลในหน่วยเมตรมาตรฐาน SI",
+                step1Text: "1 กิโลเมตร (km) = 1,000 เมตร (m)",
+                step2Prompt: "ถ้า 1 km = 1,000 m แล้ว 2.4 km จะคิดได้อย่างไร?",
+                step2Options: [
+                    { text: "2.4 × 1,000 m", correct: true },
+                    { text: "2.4 ÷ 1,000 m", correct: false },
+                    { text: "2.4 × 100 m", correct: false },
+                    { text: "2.4 ÷ 100 m", correct: false }
+                ],
+                step3Prompt: "ดังนั้น สายเคเบิล 2.4 km ยาวกี่เมตร?",
+                step3Options: [
+                    { text: "2,400 m", correct: true },
+                    { text: "240 m", correct: false },
+                    { text: "24,000 m", correct: false },
+                    { text: "0.0024 m", correct: false }
+                ]
+            },
+            {
+                recipient: "ห้องตัดเย็บชุดนักบินอวกาศ",
+                icon: "🧑‍🚀",
+                title: "วัดความยาวผ้ากันรังสี 185 เซนติเมตร (cm) เป็น เมตร (m)",
+                desc: "แปลงความยาวผ้าจากเซนติเมตรให้เป็นหน่วยเมตร",
+                step1Text: "100 เซนติเมตร (cm) = 1 เมตร (m)",
+                step2Prompt: "ถ้า 100 cm = 1 m แล้ว 1 cm จะเท่ากับเท่าไหร่?",
+                step2Options: [
+                    { text: "1 / 100 m", correct: true },
+                    { text: "1 / 1,000 m", correct: false },
+                    { text: "100 m", correct: false },
+                    { text: "1 / 10 m", correct: false }
+                ],
+                step3Prompt: "ดังนั้น ผ้ายาว 185 cm จะเท่ากับกี่เมตร?",
+                step3Options: [
+                    { text: "1.85 m", correct: true },
+                    { text: "18.5 m", correct: false },
+                    { text: "0.185 m", correct: false },
+                    { text: "1,850 m", correct: false }
+                ]
+            },
+            {
+                recipient: "ห้องปฏิบัติการเวลาควอนตัม",
+                icon: "⏱️",
+                title: "ส่งตัวจับเวลาความเร็วสูง 650 มิลลิวินาที (ms) เป็น วินาที (s)",
+                desc: "ปรับจูนตัวจับเวลาให้เป็นหน่วยวินาทีมาตรฐาน",
+                step1Text: "1,000 มิลลิวินาที (ms) = 1 วินาที (s)",
+                step2Prompt: "ถ้า 1,000 ms = 1 s แล้ว 1 ms จะเท่ากับเท่าไหร่?",
+                step2Options: [
+                    { text: "1 / 1,000 s", correct: true },
+                    { text: "1 / 60 s", correct: false },
+                    { text: "1,000 s", correct: false },
+                    { text: "1 / 100 s", correct: false }
+                ],
+                step3Prompt: "ดังนั้น 650 ms จะเท่ากับกี่วินาที?",
+                step3Options: [
+                    { text: "0.65 s", correct: true },
+                    { text: "6.5 s", correct: false },
+                    { text: "65 s", correct: false },
+                    { text: "0.065 s", correct: false }
+                ]
+            },
+            {
+                recipient: "โรงไฟฟ้าพลาสมาดวงอาทิตย์",
+                icon: "🔋",
+                title: "ส่งพลังงานสำรอง 3.2 เมกะวัตต์ (MW) เป็น กิโลวัตต์ (kW)",
+                desc: "แปลงหน่วยกำลังไฟฟ้าจากเมกะวัตต์เป็นกิโลวัตต์",
+                step1Text: "1 เมกะวัตต์ (MW) = 1,000 กิโลวัตต์ (kW)",
+                step2Prompt: "ถ้า 1 MW = 1,000 kW แล้ว 3.2 MW จะคำนวณอย่างไร?",
+                step2Options: [
+                    { text: "3.2 × 1,000 kW", correct: true },
+                    { text: "3.2 ÷ 1,000 kW", correct: false },
+                    { text: "3.2 × 100 kW", correct: false },
+                    { text: "3.2 × 10 kW", correct: false }
+                ],
+                step3Prompt: "ดังนั้น พลังงาน 3.2 MW เท่ากับกี่กิโลวัตต์?",
+                step3Options: [
+                    { text: "3,200 kW", correct: true },
+                    { text: "320 kW", correct: false },
+                    { text: "32,000 kW", correct: false },
+                    { text: "0.0032 kW", correct: false }
+                ]
+            },
+            {
+                recipient: "คลังเสบียงอาณานิคมดาวอังคาร",
+                icon: "📦",
+                title: "ชั่งน้ำหนักกล่องเสบียง 0.75 กิโลกรัม (kg) เป็น กรัม (g)",
+                desc: "แปลงหน่วยมวลจากกิโลกรัมให้เป็นกรัมเพื่อแบ่งบรรจุซอง",
+                step1Text: "1 กิโลกรัม (kg) = 1,000 กรัม (g)",
+                step2Prompt: "ถ้า 1 kg = 1,000 g แล้ว 0.75 kg จะคำนวณอย่างไร?",
+                step2Options: [
+                    { text: "0.75 × 1,000 g", correct: true },
+                    { text: "0.75 ÷ 1,000 g", correct: false },
+                    { text: "0.75 × 100 g", correct: false },
+                    { text: "1,000 ÷ 0.75 g", correct: false }
+                ],
+                step3Prompt: "ดังนั้น กล่องเสบียง 0.75 kg หนักกี่กรัม?",
+                step3Options: [
+                    { text: "750 g", correct: true },
+                    { text: "75 g", correct: false },
+                    { text: "7,500 g", correct: false },
+                    { text: "7.5 g", correct: false }
+                ]
+            },
+            {
+                recipient: "ศูนย์วิจัยไมโครชิปไซเบอร์",
+                icon: "💾",
+                title: "ส่งแผ่นวงจรขนาด 5,000 ไมโครเมตร (μm) เป็น มิลลิเมตร (mm)",
+                desc: "แปลงหน่วยจากไมโครเมตรเป็นมิลลิเมตรให้วิศวกรตรวจสอบ",
+                step1Text: "1,000 ไมโครเมตร (μm) = 1 มิลลิเมตร (mm)",
+                step2Prompt: "ถ้า 1,000 μm = 1 mm แล้ว 1 μm จะเท่ากับเท่าไหร่?",
+                step2Options: [
+                    { text: "1 / 1,000 mm", correct: true },
+                    { text: "1,000 mm", correct: false },
+                    { text: "1 / 100 mm", correct: false },
+                    { text: "1 / 10 mm", correct: false }
+                ],
+                step3Prompt: "ดังนั้น แผ่นวงจร 5,000 μm กว้างกี่มิลลิเมตร?",
+                step3Options: [
+                    { text: "5 mm", correct: true },
+                    { text: "50 mm", correct: false },
+                    { text: "0.5 mm", correct: false },
+                    { text: "500 mm", correct: false }
+                ]
+            },
+            {
+                recipient: "สถานีสูบน้ำบาดาลใต้พิภพ",
+                icon: "💧",
+                title: "ส่งตัวอย่างน้ำแร่ 450 มิลลิลิตร (mL) เป็น ลิตร (L)",
+                desc: "บันทึกปริมาตรน้ำแร่ในหน่วยลิตรลงระบบฐานข้อมูล",
+                step1Text: "1,000 มิลลิลิตร (mL) = 1 ลิตร (L)",
+                step2Prompt: "ถ้า 1,000 mL = 1 L แล้ว 1 mL จะเท่ากับเท่าไหร่?",
+                step2Options: [
+                    { text: "1 / 1,000 L", correct: true },
+                    { text: "1,000 L", correct: false },
+                    { text: "1 / 100 L", correct: false },
+                    { text: "100 L", correct: false }
+                ],
+                step3Prompt: "ดังนั้น น้ำแร่ 450 mL เท่ากับกี่ลิตร?",
+                step3Options: [
+                    { text: "0.45 L", correct: true },
+                    { text: "4.5 L", correct: false },
+                    { text: "45 L", correct: false },
+                    { text: "0.045 L", correct: false }
+                ]
+            },
+            {
+                recipient: "ฐานทัพป้องกันอุกกาบาต",
+                icon: "🛡️",
+                title: "ตั้งค่าระยะยิงเลเซอร์ 8,200 เมตร (m) เป็น กิโลเมตร (km)",
+                desc: "แปลงระยะทางจากเมตรให้เป็นกิโลเมตรสำหรับเรดาร์",
+                step1Text: "1,000 เมตร (m) = 1 กิโลเมตร (km)",
+                step2Prompt: "ถ้า 1,000 m = 1 km แล้ว 1 m จะเท่ากับเท่าไหร่?",
+                step2Options: [
+                    { text: "1 / 1,000 km", correct: true },
+                    { text: "1,000 km", correct: false },
+                    { text: "1 / 100 km", correct: false },
+                    { text: "100 km", correct: false }
+                ],
+                step3Prompt: "ดังนั้น ระยะทาง 8,200 m เท่ากับกี่กิโลเมตร?",
+                step3Options: [
+                    { text: "8.2 km", correct: true },
+                    { text: "82 km", correct: false },
+                    { text: "0.82 km", correct: false },
+                    { text: "820 km", correct: false }
+                ]
+            }
+        ];
+
+        // --- Game State Variables ---
+        let currentGameMode = 'practice';
+        let sessionMissions = []; // ชุดโจทย์ที่ถูกสุ่มลำดับใหม่ทุกครั้งที่เล่น
+        let currentMissionIdx = 0;
+        let score = 0;
+        let streak = 0;
+        let maxStreak = 0;
+        let timerInterval = null;
+        let timeLeft = 60;
+        let activeVehicleKey = 'scooter';
+        let unlockedUfo = false;
+        let wrongAttemptsInMission = 0; // นับจำนวนครั้งที่ตอบผิดในภารกิจปัจจุบัน (ห้ามเกิน 2 ครั้ง)
+        const MAX_WRONG_PER_MISSION = 2; // ตอบผิดครบ 2 ครั้ง เด้งไปข้อถัดไปทันที
+        const PRACTICE_COUNT = 5; // เล่น 5 ข้อต่อรอบ (เต็ม 750 คะแนน)
+        const PASS_SCORE_THRESHOLD = 450; // เกณฑ์ผ่าน 2 ดาวขึ้นไป (450 คะแนน)
+
+        // --- ฟังก์ชันสุ่มสลับลำดับโจทย์ (Fisher-Yates Shuffle) ---
+        function getShuffledMissions() {
+            const copy = [...missionDatabase];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        // --- Navigation & Screen Controllers ---
+        function showScreen(screenId) {
+            ['screen-menu', 'screen-game', 'screen-result', 'screen-garage', 'screen-leaderboard'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+            
+            if (screenId === 'screen-game' || screenId === 'screen-result') {
+                document.getElementById('stats-header').classList.remove('hidden');
+            } else {
+                document.getElementById('stats-header').classList.add('hidden');
+            }
+        }
+
+        function returnToMenu() {
+            if (timerInterval) clearInterval(timerInterval);
+            showScreen('screen-menu');
+            playSound('click');
+        }
+
+        function openGarage() {
+            showScreen('screen-garage');
+            playSound('click');
+        }
+
+        function closeGarage() {
+            showScreen('screen-menu');
+            playSound('click');
+        }
+
+        function openLeaderboard() {
+            showScreen('screen-leaderboard');
+            playSound('click');
+            fetchLeaderboard();
+        }
+
+        function selectVehicle(key, name, icon) {
+            if (key === 'ufo' && !unlockedUfo) {
+                alertUser("ยังไม่ปลดล็อก! สะสมคะแนนให้ถึง 450 คะแนนเพื่อปลดล็อกยูเอฟโอควอนตัม");
+                return;
+            }
+            activeVehicleKey = key;
+            document.getElementById('menu-vehicle-icon').textContent = icon;
+            document.getElementById('menu-vehicle-name').textContent = name;
+            
+            if (key === 'scooter') {
+                document.getElementById('garage-item-scooter').className = "cursor-pointer bg-slate-900/80 border-2 border-emerald-500 rounded-2xl p-4 flex items-center justify-between transition";
+                document.getElementById('garage-item-ufo').className = "cursor-pointer bg-slate-900/60 border-2 border-slate-700/60 hover:border-slate-500 rounded-2xl p-4 flex items-center justify-between transition";
+            } else {
+                document.getElementById('garage-item-ufo').className = "cursor-pointer bg-slate-900/80 border-2 border-amber-500 rounded-2xl p-4 flex items-center justify-between transition";
+                document.getElementById('garage-item-scooter').className = "cursor-pointer bg-slate-900/60 border-2 border-slate-700/60 hover:border-slate-500 rounded-2xl p-4 flex items-center justify-between transition";
+            }
+            playSound('click');
+        }
+
+        function alertUser(msg) {
+            const feedback = document.getElementById('feedback-box');
+            feedback.className = "rounded-2xl p-3.5 text-center font-medium text-sm bg-amber-950/90 border border-amber-500 text-amber-200 animate-pop";
+            feedback.textContent = msg;
+            feedback.classList.remove('hidden');
+            setTimeout(() => { feedback.classList.add('hidden'); }, 3200);
+        }
+
+        // --- Start Game ---
+        function startGame(mode) {
+            playSound('click');
+            currentGameMode = mode;
+            
+            // สุ่มชุดโจทย์ใหม่ทุกครั้งที่กดเริ่มเกม เพื่อไม่ให้นักเรียนจำข้อได้
+            sessionMissions = getShuffledMissions();
+            currentMissionIdx = 0;
+            score = 0;
+            streak = 0;
+            maxStreak = 0;
+            
+            document.getElementById('stat-score').textContent = score;
+            document.getElementById('stat-streak').textContent = streak;
+
+            if (mode === 'timeAttack') {
+                timeLeft = 60;
+                document.getElementById('total-mission-label').textContent = " (60 วิ)";
+                document.getElementById('timer-box').classList.remove('hidden');
+                document.getElementById('stat-timer').textContent = timeLeft;
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    document.getElementById('stat-timer').textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        endGame();
+                    }
+                }, 1000);
+            } else {
+                document.getElementById('total-mission-label').textContent = `/${PRACTICE_COUNT}`;
+                document.getElementById('timer-box').classList.add('hidden');
+            }
+
+            showScreen('screen-game');
+            loadMission();
+        }
+
+        // --- Load Mission & Render 3-Step บัญญัติไตรยางศ์ ---
+        function loadMission() {
+            // ตรวจสอบเงื่อนไขจบเกมในโหมด 5 ด่าน
+            if (currentGameMode === 'practice' && currentMissionIdx >= PRACTICE_COUNT) {
+                endGame();
+                return;
+            }
+
+            // หากในโหมด Time Attack เล่นครบทุกข้อในคลังแล้ว ให้สุ่มวนใหม่ต่อเนื่อง
+            if (currentMissionIdx >= sessionMissions.length) {
+                sessionMissions = getShuffledMissions();
+                currentMissionIdx = 0;
+            }
+
+            const m = sessionMissions[currentMissionIdx];
+            wrongAttemptsInMission = 0; // รีเซ็ตจำนวนครั้งที่ตอบผิดเมื่อขึ้นข้อใหม่
+            document.getElementById('current-mission-num').textContent = currentMissionIdx + 1;
+            document.getElementById('mission-icon').textContent = m.icon;
+            document.getElementById('mission-recipient').textContent = m.recipient;
+            document.getElementById('mission-title').textContent = m.title;
+            document.getElementById('mission-desc').textContent = m.desc;
+
+            // Reset feedback
+            document.getElementById('feedback-box').classList.add('hidden');
+
+            // --- Setup Step 1 ---
+            document.getElementById('box-step1').className = "bg-slate-800/90 border border-indigo-500/50 rounded-2xl p-4 shadow-lg transition duration-300";
+            document.getElementById('content-step1').innerHTML = `<span class="text-amber-300 font-bold">ทราบว่า:</span> ${m.step1Text}`;
+            document.getElementById('badge-step1').textContent = "✓ บรรทัดฐานพร้อม";
+            document.getElementById('badge-step1').className = "text-xs text-emerald-400 font-semibold bg-emerald-950/60 px-2 py-0.5 rounded";
+
+            // --- Setup Step 2 ---
+            const box2 = document.getElementById('box-step2');
+            box2.className = "bg-slate-800/70 border border-emerald-500/30 rounded-2xl p-4 transition duration-300 relative";
+            document.getElementById('prompt-step2').textContent = m.step2Prompt;
+            document.getElementById('badge-step2').textContent = "กำลังดำเนินการ";
+            document.getElementById('badge-step2').className = "text-xs text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded";
+            
+            const optContainer2 = document.getElementById('options-step2');
+            optContainer2.innerHTML = '';
+            
+            // สุ่มลำดับตัวเลือกบรรทัดที่ 2
+            let shuffledOpts2 = [...m.step2Options].sort(() => Math.random() - 0.5);
+            shuffledOpts2.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "p-3 bg-slate-900/80 hover:bg-emerald-600/20 border border-slate-700 hover:border-emerald-500 text-slate-200 text-sm font-medium rounded-xl transition text-left flex items-center justify-between";
+                btn.innerHTML = `<span>${opt.text}</span> <span class="text-xs text-slate-500">เลือก</span>`;
+                btn.onclick = () => handleStep2Choice(opt.correct, btn);
+                optContainer2.appendChild(btn);
+            });
+
+            // --- Setup Step 3 (Locked initially) ---
+            const box3 = document.getElementById('box-step3');
+            box3.className = "bg-slate-800/40 border border-slate-700/40 rounded-2xl p-4 opacity-50 pointer-events-none transition duration-300 relative";
+            document.getElementById('prompt-step3').textContent = m.step3Prompt;
+            document.getElementById('badge-step3').textContent = "ล็อกอยู่";
+            document.getElementById('badge-step3').className = "text-xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded";
+            
+            const optContainer3 = document.getElementById('options-step3');
+            optContainer3.innerHTML = '';
+            let shuffledOpts3 = [...m.step3Options].sort(() => Math.random() - 0.5);
+            shuffledOpts3.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "p-3 bg-slate-900/80 border border-slate-700 text-slate-400 text-sm font-medium rounded-xl text-left flex items-center justify-between cursor-not-allowed";
+                btn.innerHTML = `<span>${opt.text}</span>`;
+                optContainer3.appendChild(btn);
+            });
+        }
+
+        // --- Handle Step 2 Interaction (+50 คะแนน ติ้ง!) ---
+        function handleStep2Choice(isCorrect, btnElement) {
+            if (isCorrect) {
+                btnElement.className = "p-3 bg-emerald-600/30 border border-emerald-500 text-emerald-200 text-sm font-bold rounded-2xl text-left flex items-center justify-between shadow-lg shadow-emerald-500/20";
+                
+                // เพิ่มคอมโบและบวกคะแนนบรรทัดที่ 2 ทันที
+                streak++;
+                if (streak > maxStreak) maxStreak = streak;
+                document.getElementById('stat-streak').textContent = streak;
+
+                const comboBonus = streak > 1 ? streak * 5 : 0;
+                triggerScorePopup(50 + comboBonus, streak > 1 ? `Combo ${streak}x` : "บรรทัดที่ 2");
+
+                // Disable all step 2 buttons
+                const box2 = document.getElementById('box-step2');
+                box2.querySelectorAll('button').forEach(b => b.disabled = true);
+                document.getElementById('badge-step2').textContent = "✓ ถูกต้อง (+50)";
+                document.getElementById('badge-step2').className = "text-xs text-emerald-300 bg-emerald-900 px-2 py-0.5 rounded font-bold";
+
+                // Unlock Step 3
+                const box3 = document.getElementById('box-step3');
+                box3.className = "bg-slate-800/90 border border-amber-500/50 rounded-2xl p-4 opacity-100 pointer-events-auto shadow-lg transition duration-300 animate-pop relative";
+                document.getElementById('badge-step3').textContent = "กำลังดำเนินการ";
+                document.getElementById('badge-step3').className = "text-xs text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded";
+
+                // Render Step 3 options dynamically (สุ่มลำดับตัวเลือกบรรทัดที่ 3)
+                const m = sessionMissions[currentMissionIdx];
+                const optContainer3 = document.getElementById('options-step3');
+                optContainer3.innerHTML = '';
+                let shuffledOpts3 = [...m.step3Options].sort(() => Math.random() - 0.5);
+                shuffledOpts3.forEach(opt => {
+                    const btn3 = document.createElement('button');
+                    btn3.className = "p-3 bg-slate-900/80 hover:bg-amber-600/20 border border-slate-700 hover:border-amber-500 text-slate-200 text-sm font-medium rounded-xl transition text-left flex items-center justify-between";
+                    btn3.innerHTML = `<span>${opt.text}</span> <span class="text-xs text-slate-500">เลือก</span>`;
+                    btn3.onclick = () => handleStep3Choice(opt.correct, btn3);
+                    optContainer3.appendChild(btn3);
+                });
+
+            } else {
+                playSound('error');
+                wrongAttemptsInMission++;
+                btnElement.disabled = true;
+                btnElement.className = "p-3 bg-rose-600/30 border border-rose-500 text-rose-200 text-sm font-medium rounded-2xl text-left flex items-center justify-between opacity-75 cursor-not-allowed";
+                streak = 0;
+                document.getElementById('stat-streak').textContent = streak;
+
+                if (wrongAttemptsInMission >= MAX_WRONG_PER_MISSION) {
+                    handleMissionFailed();
+                } else {
+                    const remaining = MAX_WRONG_PER_MISSION - wrongAttemptsInMission;
+                    alertUser(`ยังไม่ถูกต้อง! (เหลือโอกาสตอบผิดอีก ${remaining} ครั้ง ก่อนข้ามข้ออัตโนมัติ)`);
+                }
+            }
+        }
+
+        // --- Handle Step 3 Interaction (+100 คะแนน ติ้ง!) ---
+        function handleStep3Choice(isCorrect, btnElement) {
+            const feedback = document.getElementById('feedback-box');
+            
+            if (isCorrect) {
+                btnElement.className = "p-3 bg-amber-600/30 border border-amber-500 text-amber-200 text-sm font-bold rounded-2xl text-left flex items-center justify-between shadow-lg shadow-amber-500/20";
+                
+                // Disable all step 3 buttons
+                const box3 = document.getElementById('box-step3');
+                box3.querySelectorAll('button').forEach(b => b.disabled = true);
+                document.getElementById('badge-step3').textContent = "✓ สำเร็จ (+100)";
+                document.getElementById('badge-step3').className = "text-xs text-amber-300 bg-amber-900 px-2 py-0.5 rounded font-bold";
+
+                // Update streak & stack score
+                streak++;
+                if (streak > maxStreak) maxStreak = streak;
+                document.getElementById('stat-streak').textContent = streak;
+
+                const comboBonus = streak > 1 ? streak * 10 : 0;
+                triggerScorePopup(100 + comboBonus, streak > 1 ? `Combo ${streak}x` : "สำเร็จภารกิจ!");
+
+                // Check UFO unlock
+                if (score >= 450 && !unlockedUfo) {
+                    unlockedUfo = true;
+                    document.getElementById('ufo-status').textContent = "ปลดล็อกแล้ว ✨";
+                    document.getElementById('ufo-status').className = "text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-1 rounded-full font-bold";
+                }
+
+                feedback.className = "rounded-2xl p-3.5 text-center font-bold text-sm bg-emerald-950/90 border border-emerald-500 text-emerald-200 animate-pop";
+                feedback.innerHTML = "🚀 จัดส่งพัสดุมิติพิศวงสำเร็จ! กำลังวาร์ปไปภารกิจถัดไป...";
+                feedback.classList.remove('hidden');
+
+                // Next mission delay
+                setTimeout(() => {
+                    currentMissionIdx++;
+                    loadMission();
+                }, 1300);
+
+            } else {
+                playSound('error');
+                wrongAttemptsInMission++;
+                btnElement.disabled = true;
+                btnElement.className = "p-3 bg-rose-600/30 border border-rose-500 text-rose-200 text-sm font-medium rounded-2xl text-left flex items-center justify-between opacity-75 cursor-not-allowed";
+                streak = 0;
+                document.getElementById('stat-streak').textContent = streak;
+
+                if (wrongAttemptsInMission >= MAX_WRONG_PER_MISSION) {
+                    handleMissionFailed();
+                } else {
+                    const remaining = MAX_WRONG_PER_MISSION - wrongAttemptsInMission;
+                    alertUser(`คำตอบคลาดเคลื่อน! (เหลือโอกาสตอบผิดอีก ${remaining} ครั้ง ก่อนข้ามข้ออัตโนมัติ)`);
+                }
+            }
+        }
+
+        // --- กรณีตอบผิดครบ 2 ครั้ง: ล็อกปุ่ม เฉลยสั้นๆ แล้วเด้งไปข้อถัดไปทันที ---
+        function handleMissionFailed() {
+            // ล็อกปุ่มทั้งหมดในข้อนี้กันกดซ้ำ
+            document.querySelectorAll('#box-step2 button, #box-step3 button').forEach(b => {
+                b.disabled = true;
+                b.classList.add('pointer-events-none');
+            });
+
+            const m = sessionMissions[currentMissionIdx];
+            const ans2 = m.step2Options.find(o => o.correct)?.text || "";
+            const ans3 = m.step3Options.find(o => o.correct)?.text || "";
+
+            const feedback = document.getElementById('feedback-box');
+            feedback.className = "rounded-2xl p-3.5 text-center font-medium text-xs sm:text-sm bg-rose-950/95 border border-rose-500 text-rose-200 animate-pop";
+            feedback.innerHTML = `❌ ตอบผิดครบ 2 ครั้งแล้ว! (เฉลย: <b>${ans2}</b> ➔ <b>${ans3}</b>)<br><span class="text-amber-300 font-bold">กำลังวาร์ปข้ามไปภารกิจถัดไป...</span>`;
+            feedback.classList.remove('hidden');
+
+            setTimeout(() => {
+                currentMissionIdx++;
+                loadMission();
+            }, 1800);
+        }
+
+        // --- End Game & Star Evaluation (เกณฑ์ผ่าน 2 ดาวขึ้นไป) ---
+        function endGame() {
+            if (timerInterval) clearInterval(timerInterval);
+            playSound('win');
+            showScreen('screen-result');
+            
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-streak').textContent = maxStreak + "x";
+
+            // คำนวณจำนวนดาวที่ได้ (เกณฑ์ผ่าน: ต้องได้ 2 ดาวขึ้นไป หรือ >= 450 คะแนน)
+            let starsCount = 0;
+            if (score >= 700) {
+                starsCount = 3;
+            } else if (score >= PASS_SCORE_THRESHOLD) {
+                starsCount = 2;
+            } else if (score >= 200) {
+                starsCount = 1;
+            } else {
+                starsCount = 0;
+            }
+
+            const starDisplay = "⭐".repeat(starsCount) + "☆".repeat(3 - starsCount);
+            document.getElementById('result-stars').textContent = starDisplay;
+
+            const badge = document.getElementById('result-pass-badge');
+            const hofSection = document.getElementById('hof-submit-section');
+            const submitBtn = document.getElementById('btn-submit-hof');
+            const submitStatus = document.getElementById('hof-submit-status');
+
+            // รีเซ็ตฟอร์มบันทึก Hall of Fame
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitStatus.classList.add('hidden');
+
+            if (starsCount >= 2) {
+                badge.textContent = `ผ่านเกณฑ์ภารกิจ! ได้รับ ${starsCount} ดาว (เกณฑ์ผ่าน 2 ดาวขึ้นไป)`;
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+                document.getElementById('result-heading').textContent = "ภารกิจสำเร็จระดับยอดเยี่ยม!";
+                document.getElementById('result-subtext').textContent = "คุณทำคะแนนผ่านเกณฑ์ 2 ดาว สามารถจารึกชื่อลงใน Hall of Fame ได้ทันที!";
+                hofSection.classList.remove('hidden');
+            } else {
+                badge.textContent = `ยังไม่ผ่านเกณฑ์ (ได้รับ ${starsCount} ดาว • ต้องได้ 2 ดาว / 450+ คะแนน)`;
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40";
+                document.getElementById('result-heading').textContent = "ภารกิจยังไม่ผ่านเกณฑ์มาตรฐาน";
+                document.getElementById('result-subtext').textContent = "ต้องทำคะแนนให้ถึง 450 คะแนน (2 ดาวขึ้นไป) เพื่อปลดล็อกสิทธิ์เข้าสู่ Hall of Fame ลองใหม่อีกครั้งนะ!";
+                hofSection.classList.add('hidden');
+            }
+        }
+
+        // --- บันทึกรายชื่อเข้าสู่ Google Apps Script Hall of Fame ---
+        async function submitToHallOfFame() {
+            const nameInput = document.getElementById('player-name').value.trim();
+            const classInput = document.getElementById('player-class').value.trim() || "-";
+            const statusBox = document.getElementById('hof-submit-status');
+            const btn = document.getElementById('btn-submit-hof');
+
+            if (!nameInput) {
+                statusBox.textContent = "⚠️ กรุณากรอกชื่อของคุณก่อนบันทึกอันดับ";
+                statusBox.className = "text-xs text-center font-medium text-amber-400 block";
+                return;
+            }
+
+            playSound('click');
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            statusBox.textContent = "⏳ กำลังส่งข้อมูลเข้าสู่ทำเนียบ Hall of Fame...";
+            statusBox.className = "text-xs text-center font-medium text-indigo-300 block";
+
+            const payload = {
+                action: "submit",
+                name: nameInput,
+                classroom: classInput,
+                score: score,
+                maxStreak: maxStreak,
+                mode: currentGameMode === 'practice' ? 'ภารกิจ 5 ด่าน' : 'ท้าทาย 60 วิ',
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                // ส่งข้อมูลแบบ POST (ใช้ text/plain เพื่อหลีกเลี่ยง CORS Preflight บน Google Apps Script)
+                await fetch(GAS_WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                playSound('ding');
+                statusBox.textContent = "✅ บันทึกชื่อเข้าสู่ Hall of Fame เรียบร้อยแล้ว!";
+                statusBox.className = "text-xs text-center font-bold text-emerald-400 block";
+                
+                // เก็บสำรองในเครื่องเผื่อกรณีเปิดดูทันที
+                saveLocalFallbackScore(payload);
+            } catch (err) {
+                console.error("Submit Error:", err);
+                statusBox.textContent = "⚠️ บันทึกข้อมูลเรียบร้อย (โหมดสำรอง)";
+                statusBox.className = "text-xs text-center font-medium text-amber-300 block";
+                saveLocalFallbackScore(payload);
+            }
+        }
+
+        function saveLocalFallbackScore(entry) {
+            try {
+                const list = JSON.parse(sessionStorage.getItem('si_courier_hof') || '[]');
+                list.push(entry);
+                sessionStorage.setItem('si_courier_hof', JSON.stringify(list));
+            } catch (e) {}
+        }
+
+        // --- ดึงข้อมูลจัดอันดับจาก Google Apps Script Hall of Fame ---
+        async function fetchLeaderboard() {
+            const loading = document.getElementById('leaderboard-loading');
+            const listEl = document.getElementById('leaderboard-list');
+            
+            loading.classList.remove('hidden');
+            listEl.classList.add('hidden');
+            listEl.innerHTML = '';
+
+            let records = [];
+
+            try {
+                const response = await fetch(`${GAS_WEB_APP_URL}?action=getLeaderboard`, {
+                    method: "GET"
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (Array.isArray(data)) {
+                        records = data;
+                    } else if (data && Array.isArray(data.leaderboard)) {
+                        records = data.leaderboard;
+                    } else if (data && Array.isArray(data.data)) {
+                        records = data.data;
+                    }
+                }
+            } catch (error) {
+                console.log("Fetching from GAS fallback:", error);
+            }
+
+            // รวมข้อมูลสำรองในเซสชันปัจจุบันหากยังโหลดจากชีตไม่ทัน
+            try {
+                const localRecords = JSON.parse(sessionStorage.getItem('si_courier_hof') || '[]');
+                localRecords.forEach(lr => {
+                    const exists = records.some(r => r.name === lr.name && Number(r.score) === Number(lr.score));
+                    if (!exists) records.push(lr);
+                });
+            } catch (e) {}
+
+            // จัดเรียงคะแนนจากมากไปน้อย
+            records.sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+
+            loading.classList.add('hidden');
+            listEl.classList.remove('hidden');
+
+            if (records.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-8 bg-slate-900/50 rounded-2xl border border-slate-700/50">
+                        <div class="text-3xl mb-2">🌟</div>
+                        <p class="text-sm text-slate-300 font-medium">ยังไม่มีรายชื่อในทำเนียบขณะนี้</p>
+                        <p class="text-xs text-slate-400 mt-1">ทำคะแนนให้ได้ 2 ดาวขึ้นไป (450+ แต้ม) เพื่อเป็นคนแรก!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            records.slice(0, 20).forEach((item, index) => {
+                const rank = index + 1;
+                let medal = `<span class="w-7 h-7 rounded-full bg-slate-800 text-slate-300 text-xs font-bold flex items-center justify-center">${rank}</span>`;
+                let rowStyle = "bg-slate-900/60 border-slate-700/60";
+
+                if (rank === 1) {
+                    medal = `<span class="text-2xl">🥇</span>`;
+                    rowStyle = "bg-gradient-to-r from-amber-500/20 to-slate-900/80 border-amber-400/50";
+                } else if (rank === 2) {
+                    medal = `<span class="text-2xl">🥈</span>`;
+                    rowStyle = "bg-gradient-to-r from-slate-300/15 to-slate-900/80 border-slate-400/40";
+                } else if (rank === 3) {
+                    medal = `<span class="text-2xl">🥉</span>`;
+                    rowStyle = "bg-gradient-to-r from-orange-500/15 to-slate-900/80 border-orange-400/40";
+                }
+
+                const row = document.createElement('div');
+                row.className = `flex items-center justify-between p-3 rounded-2xl border ${rowStyle} transition`;
+                row.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 flex justify-center">${medal}</div>
+                        <div>
+                            <div class="font-bold text-sm text-white">${escapeHTML(item.name || 'ผู้กล้านิรนาม')}</div>
+                            <div class="text-[11px] text-slate-400">ห้อง: ${escapeHTML(item.classroom || '-')} • ${escapeHTML(item.mode || 'ภารกิจ')}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-extrabold text-amber-400 text-base">${Number(item.score || 0).toLocaleString()}</div>
+                        <div class="text-[10px] text-emerald-400">คอมโบ ${item.maxStreak || 1}x</div>
+                    </div>
+                `;
+                listEl.appendChild(row);
+            });
+        }
+
+        function escapeHTML(str) {
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag]));
+        }
+    </script>
+</body>
+</html>
